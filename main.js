@@ -46,7 +46,7 @@ d3.csv("movies.csv").then(data => {
     // 3.c: Convert to array and sort by year
     const lineData = Array.from(sumGrossByYear,
         ([year, gross]) => ({ year, gross})
-    ).sort((a, b) => a.year - b.year)
+    ).sort((a, b) => a.year - b.year);
 
     // Check your work
     // console.log(lineData);
@@ -116,7 +116,7 @@ d3.csv("movies.csv").then(data => {
                 d3.min(lineData, d => d.year),
                 d3.max(lineData, d => d.year) + 1
             ))
-            );
+        );
 
     // 6.b: Y-axis (Gross)
     // Adding a format to set to 1B, rather than 1,000,000
@@ -137,7 +137,7 @@ d3.csv("movies.csv").then(data => {
     .attr("class", "title")
     .attr("x", width / 2)
     .attr("y", -margin.top / 2)
-    .text("Trends in Total Gross Movie Revenue")
+    .text("Trends in Total Gross Movie Revenue");
 
     // 7.b: X-axis label (Year)
     svgLine.append("text")
@@ -158,7 +158,7 @@ d3.csv("movies.csv").then(data => {
     .attr("transform", "rotate(-90)")
     .attr("y", -margin.left / 2)
     .attr("x", -height / 2)
-    .text("Gross Revenue ($, billions)")
+    .text("Gross Revenue ($, billions)");
 
 
     /* ===================== BAR CHART ===================== */
@@ -254,5 +254,5 @@ d3.csv("movies.csv").then(data => {
     .attr("transform", "rotate(-90)")
     .attr("y", -margin.left / 2)
     .attr("x", -height / 2)
-    .text("Score")
+    .text("Score");
 });
