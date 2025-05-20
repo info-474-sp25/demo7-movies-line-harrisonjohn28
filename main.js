@@ -49,10 +49,13 @@ d3.csv("movies.csv").then(data => {
     ).sort((a, b) => a.year - b.year)
 
     // Check your work
-    console.log(lineData);
+    // console.log(lineData);
+
 
     // 4: SET SCALES FOR LINE CHART
     // 4.a: X scale (Year)
+    // Set linear scale for axis, set domain for input data vals &
+    // range for output *pixel* values,
     const xYear = d3.scaleLinear()
     .domain([2010, d3.max(lineData, d => d.year)])
     .range([0, width]);
@@ -64,21 +67,18 @@ d3.csv("movies.csv").then(data => {
     .range([height, 0]);
 
     // 4.c: Define line generator for plotting line
+    // (creating the line between points)
 
     const line = d3.line()
     .x(d => xYear(d.year))
     .y(d => yGross(d.gross));
 
+
     // 5: PLOT LINE
 
-    svgLine.append("path")
-    .datum(lineData)
-
-    svgLine.selectAll(".line")
-    .data([lineData])
-    .enter()
-    .append("path")
-
+    // Adding data as part of the path, binding the entire array
+    // since all data represents one element, and adding visual
+    // styling with attributes
     svgLine.append("path")
     .datum(lineData)
     .attr("d", line)
@@ -86,13 +86,27 @@ d3.csv("movies.csv").then(data => {
     .attr("stroke-width", 2)
     .attr("fill", "none");
 
-    svgLine.selectAll('.line')
-    .data([lineData])
-    .enter()
+    // Alt method: selecting all paths with class 'line'
+    // and binding the array as one element
+
+    // svgLine.selectAll('.line')
+    //     .data([lineData])
+    //     .enter()
+    //     .append('path')
+    //     .attr('d', line)
+    //     .style('stroke', 'blue')
+    //     .style('fill', 'none')
+    //     .style('stroke-width', 2);
 
 
     // 6: ADD AXES FOR LINE CHART
     // 6.a: X-axis (Year)
+
+    // Add to graph element of SVG,
+    // transform it to where it needs to go @ bottom,
+    // then create the axisBottom with ticks formatted
+    // to remove decimals and range set to force removal
+    // of half marks.
 
     svgLine.append("g")
     .attr("transform", `translate(0,${height})`)
@@ -105,14 +119,20 @@ d3.csv("movies.csv").then(data => {
             );
 
     // 6.b: Y-axis (Gross)
+    // Adding a format to set to 1B, rather than 1,000,000
 
     svgLine.append("g")
     .call(d3.axisLeft(yGross)
         .tickFormat(d => d / 1000000000 + "B")
     );
 
+
     // 7: ADD LABELS FOR LINE CHART
     // 7.a: Chart Title
+    // Adding a text element with a title class,
+    // then centering it within the width and the top margin
+    // we defined up top, before actually adding the text.
+
     svgLine.append("text")
     .attr("class", "title")
     .attr("x", width / 2)
@@ -127,6 +147,12 @@ d3.csv("movies.csv").then(data => {
     .text("Directors");
 
     // 7.c: Y-axis label (Total Gross)
+    // Think of this being done in reverse!
+    // Instead of moving horzontally and vertically,
+    // we rotate it and move it 'vertically' relative to
+    // the element and 'horizontally' relative to the element
+    // rather than the graph itself.
+
     svgLine.append("text")
     .attr("class", "axis-label")
     .attr("transform", "rotate(-90)")
@@ -134,34 +160,47 @@ d3.csv("movies.csv").then(data => {
     .attr("x", -height / 2)
     .text("Gross Revenue ($, billions)")
 
-    // 7.c: Y-axis label (Average IMDb Score)
 
     /* ===================== BAR CHART ===================== */
-    console.log(data)
+    // console.log(data)
 
+    // Filtering the data so that entries never have a blank 
+    // director value or a missing score value.
     const barCleanData = data.filter(d => 
         d.director != ''
         && d.score != null
     );
     
-    console.log("Bar Clean Data:", barCleanData);
+    // console.log("Bar Clean Data:", barCleanData);
 
+    // Doing aggregation, where we group by a given
+    // director and average all of the associated score
+    // values for that director. Comes out as a dictionary
+    // of funky values, where it's {"Dir name" => x.y}
     const barMap = d3.rollup(barCleanData,
         v => d3.mean(v, d => d.score),
         d => d.director
     );
 
-    console.log("Bar map: ", barMap)
+    // console.log("Bar map: ", barMap)
+
+    // Creating an array of object, where each object
+    // is {"director": string, "score": x.y}. Now that this
+    // is usable, sorting based on score and slicing down to
+    // just the top 6 scores.
 
     const barFinalArr = Array.from(barMap,
         ([director, score]) => ({ director, score })
     )
     .sort((a, b) => b.score - a.score)
-    .slice(0, 6)
-    ;
+    .slice(0, 6);
 
-    console.log("Final bar data:", barFinalArr);
+    // console.log("Final bar data:", barFinalArr);
 
+    // Setting our bar's scale using scaleBand rather than scaleLinear,
+    // since we're doing a bar chart and don't need a linear x-axis but
+    // a categorical one. Extracting these categories for the x-axis' domain,
+    // starting from the beginning and going up, then giving each one a lil space.
     let barXScale = d3.scaleBand()
     .domain(barFinalArr.map(d => d.director))
     .range([0, width])
@@ -171,6 +210,12 @@ d3.csv("movies.csv").then(data => {
     .domain([0, d3.max(barFinalArr, d => d.score)])
     .range([height, 0]);
 
+    // Using rect shapes, populating them with data, then
+    // setting their x attribute to a director that matches
+    // a value in the x-scale, their y attribute to the average score,
+    // each bar's width consistent with scaleBand's bandwidth function,
+    // and setting their max height to fall relative to the height we defined.
+
     svgBar.selectAll("rect")
     .data(barFinalArr)
     .enter()
@@ -179,9 +224,11 @@ d3.csv("movies.csv").then(data => {
     .attr("y", d => barYScale(d.score))
     .attr("width", barXScale.bandwidth())
     .attr("height", d => height-barYScale(d.score))
-    .attr("fill", "blue")
-    ;
-    
+    .attr("fill", "blue");
+
+    // Adding our axes to the graph along with their
+    // labels (directors under each bar, properly spaced
+    // and noted score labesl)
     svgBar.append("g")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(barXScale).tickFormat(d => d));
@@ -189,6 +236,7 @@ d3.csv("movies.csv").then(data => {
     svgBar.append("g")
     .call(d3.axisLeft(barYScale));
 
+    // Adding our text elements to each
     svgBar.append("text")
     .attr("class", "title")
     .attr("x", width / 2)
